@@ -9,10 +9,6 @@ simTweedieTest <-
     
   } 
 
-# Q2 -----------
-
-# A function for running simTweedieTest many times
-
 MTweedieTests <-
   function(N, M, sig) {
     sum(replicate(M, simTweedieTest(N)) < sig) / M
@@ -20,32 +16,26 @@ MTweedieTests <-
 
 MTweedieTests(N = 100, M = 1000, sig = .05)
 
-# Q3 -----------
-
-# Testing different sample sizes
-
-# Part 1: We begin by creating a data frame with different sample sizes
-
 df <- 
   tibble(N = c(10, 100, 1000, 5000), 
          M = 100, 
          share_reject = NA)
 
-# Part 2: Looping over values
+# Setting max cores (I only have 2)
 maxcores <- 2
 Cores <- min(parallel::detectCores(), maxcores)
 
-# Instantiate the cores:
+# Instantiate the cores
 cl <- makeCluster(Cores)
 
-# Next we register the cluster..
+# Register the cluster
 registerDoParallel(cl)
 
-df_2 <- foreach(
+df_2 <- foreach( # Identify task for cores
   i = 1:nrow(df),
-  .combine = 'rbind',
-  .packages = c('tweedie', 'tidyverse')
-) %dopar%
+  .combine = 'rbind', # Row bind after finished
+  .packages = c('tweedie', 'tidyverse') # Package needed in process
+) %dopar% # Execute below parallel
   tibble(
     N = df$N[i],
     M = df$M[i],
@@ -56,9 +46,7 @@ df_2 <- foreach(
         0.05
       )
   )
-stopCluster(cl)
-
-# Part 3: Illustrating results
+stopCluster(cl) # Stop the cluster
 
 df |> 
   ggplot(aes(x = log(N), 

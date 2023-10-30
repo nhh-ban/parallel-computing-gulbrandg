@@ -1,4 +1,3 @@
-
 simTweedieTest <-  
   function(N){
     t.test(
@@ -10,23 +9,27 @@ simTweedieTest <-
     
   } 
 
+# Setting max cores (I only have 2)
 maxcores <- 2
 Cores <- min(parallel::detectCores(), maxcores)
-sTT <- simTweedieTest
-
+sTT <- simTweedieTest # Set function (could not get tis to work while only setting)
+                      # function outside core setting
 MTweedieTests <-
   function(N, M, sig) {
-    sTT <- simTweedieTest
-    the_sum <- foreach(
+    sTT <- simTweedieTest 
+    the_sum <- foreach( # Identify task for cores
       i = 1:M,
-      .combine = 'rbind',
-      .packages = c('tweedie', 'tidyverse')
-    ) %dopar%
+      .combine = 'rbind', # Row bind after finished
+      .packages = c('tweedie', 'tidyverse') # Package needed in process
+    ) %dopar% # Execute  below parallel
       tibble(
         t = (sTT(N)) < sig)
+    
     return( sum(the_sum) / M)
   }
-cl <- makeCluster(Cores)
+cl <- makeCluster(Cores)  # Initate clusters (takes some time so I put it outrside)
+                          # Should have maybe put it inside to make all parallel 
+                          # computations part of the function
 MTweedieTests(N = 100, M = 1000, sig = .05)
 
 df <- 
@@ -41,7 +44,7 @@ for (i in 1:nrow(df)) {
                   M   = df$M[i],
                   sig = .05)
 }
-stopCluster(cl)
+stopCluster(cl) # Stop cluster when all need for the function is finished
 
 
 
